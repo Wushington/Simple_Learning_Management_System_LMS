@@ -1,7 +1,8 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
+# Create your models here.
 class User(AbstractUser):
     class Role(models.TextChoices):
         INSTRUCTOR = "instructor", "Instructor"
@@ -12,3 +13,6 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.STUDENT,
     )
+
+    def __str__(self):
+        return f"{self.username} ({self.get_role_display()})"
