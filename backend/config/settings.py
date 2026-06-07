@@ -2,7 +2,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "dev-only-secret-key-change-before-deploying"
+SECRET_KEY = "secret-key-123" # To be replaced
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 

@@ -1,53 +1,101 @@
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-
-from accounts.permissions import IsInstructor, IsStudent
+from rest_framework.views import APIView
 
 from .models import Chapter, Course, Enrollment
-from .permissions import (
-    IsChapterCourseInstructorOrPublicReadOnly,
-    IsCourseInstructorOrReadOnly,
-)
 from .serializers import (
     ChapterSerializer,
-    CourseDetailSerializer,
     CourseSerializer,
     EnrollmentSerializer,
 )
 
 
-class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.select_related("instructor").prefetch_related("chapters")
+def is_instructor(user):
+    return user.is_authenticated and user.role == "instructor"
 
-    def get_serializer_class(self):
-        if self.action == "retrieve":
-            return CourseDetailSerializer
-        return CourseSerializer
 
-    def get_permissions(self):
-        if self.action == "create":
-            return [IsInstructor()]
+def is_student(user):
+    return user.is_authenticated and user.role == "student"
 
-        if self.action in ["update", "partial_update", "destroy"]:
-            return [IsCourseInstructorOrReadOnly()]
 
-        if self.action == "join":
-            return [IsStudent()]
+def is_course_owner(user, course):
+    return is_instructor(user) and course.instructor == user
 
-        if self.action == "my_enrollments":
-            return [IsAuthenticated()]
 
-        return [AllowAny()]
+def is_enrolled(user, course):
+    return (
+        is_student(user)
+        and Enrollment.objects.filter(student=user, course=course).exists()
+    )
 
-    def perform_create(self, serializer):
-        serializer.save(instructor=self.request.user)
 
-    @action(detail=True, methods=["post"])
-    def join(self, request, pk=None):
-        course = self.get_object()
+class CourseListCreateView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        courses = Course.objects.select_related("instructor").all()
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        if not is_instructor(request.user):
+            return Response(
+                {"detail": "Only instructors can create courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = CourseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(instructor=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CourseDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+        serializer = CourseSerializer(course)
+        return Response(serializer.data)
+
+    def patch(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+
+        if not is_course_owner(request.user, course):
+            return Response(
+                {"detail": "Only this course's instructor can edit it."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = CourseSerializer(course, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+
+        if not is_course_owner(request.user, course):
+            return Response(
+                {"detail": "Only this course's instructor can delete it."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        course.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CourseJoinView(APIView):
+    def post(self, request, course_id):
+        if not is_student(request.user):
+            return Response(
+                {"detail": "Only students can join courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        course = get_object_or_404(Course, id=course_id)
         enrollment, created = Enrollment.objects.get_or_create(
             student=request.user,
             course=course,
@@ -59,49 +107,87 @@ class CourseViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = EnrollmentSerializer(enrollment, context={"request": request})
+        serializer = EnrollmentSerializer(enrollment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=["get"])
-    def chapters(self, request, pk=None):
-        course = self.get_object()
-        user = request.user
 
-        if user.is_authenticated and course.instructor == user:
+class CourseChaptersView(APIView):
+    def get(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+
+        if is_course_owner(request.user, course):
             chapters = course.chapters.all()
-        else:
+        elif is_enrolled(request.user, course):
             chapters = course.chapters.filter(is_public=True)
+        else:
+            return Response(
+                {"detail": "Join this course to read its public chapters."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-        serializer = ChapterSerializer(chapters, many=True, context={"request": request})
+        serializer = ChapterSerializer(chapters, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=["get"], url_path="my-enrollments")
-    def my_enrollments(self, request):
-        enrollments = Enrollment.objects.filter(student=request.user).select_related("course")
-        serializer = EnrollmentSerializer(enrollments, many=True, context={"request": request})
+    def post(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+
+        if not is_course_owner(request.user, course):
+            return Response(
+                {"detail": "Only this course's instructor can add chapters."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = ChapterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(course=course)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ChapterDetailView(APIView):
+    def get_chapter(self, chapter_id):
+        return get_object_or_404(
+            Chapter.objects.select_related("course", "course__instructor"),
+            id=chapter_id,
+        )
+
+    def get(self, request, chapter_id):
+        chapter = self.get_chapter(chapter_id)
+        course = chapter.course
+
+        if not (
+            is_course_owner(request.user, course)
+            or (chapter.is_public and is_enrolled(request.user, course))
+        ):
+            return Response(
+                {"detail": "You cannot read this chapter."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = ChapterSerializer(chapter)
         return Response(serializer.data)
 
+    def patch(self, request, chapter_id):
+        chapter = self.get_chapter(chapter_id)
 
-class ChapterViewSet(viewsets.ModelViewSet):
-    serializer_class = ChapterSerializer
-    permission_classes = [IsChapterCourseInstructorOrPublicReadOnly]
+        if not is_course_owner(request.user, chapter.course):
+            return Response(
+                {"detail": "Only this course's instructor can edit chapters."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-    def get_queryset(self):
-        user = self.request.user
-        queryset = Chapter.objects.select_related("course", "course__instructor")
-
-        if user.is_authenticated and user.role == "instructor":
-            return queryset.filter(course__instructor=user)
-
-        return queryset.filter(is_public=True)
-
-    def perform_create(self, serializer):
-        course = serializer.validated_data.get("course")
-
-        if not course:
-            raise ValidationError({"course": "Course ID is required."})
-
-        if course.instructor != self.request.user:
-            raise PermissionDenied("You can only add chapters to your own courses.")
-
+        serializer = ChapterSerializer(chapter, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, chapter_id):
+        chapter = self.get_chapter(chapter_id)
+
+        if not is_course_owner(request.user, chapter.course):
+            return Response(
+                {"detail": "Only this course's instructor can delete chapters."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        chapter.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

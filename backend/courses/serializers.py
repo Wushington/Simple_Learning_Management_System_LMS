@@ -7,6 +7,7 @@ class ChapterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chapter
         fields = ["id", "course", "title", "content", "is_public", "order"]
+        read_only_fields = ["course"]
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -26,24 +27,6 @@ class CourseSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["instructor", "created_at"]
-
-
-class CourseDetailSerializer(CourseSerializer):
-    chapters = serializers.SerializerMethodField()
-
-    class Meta(CourseSerializer.Meta):
-        fields = CourseSerializer.Meta.fields + ["chapters"]
-
-    def get_chapters(self, course):
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-
-        if user and user.is_authenticated and course.instructor == user:
-            chapters = course.chapters.all()
-        else:
-            chapters = course.chapters.filter(is_public=True)
-
-        return ChapterSerializer(chapters, many=True, context=self.context).data
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
