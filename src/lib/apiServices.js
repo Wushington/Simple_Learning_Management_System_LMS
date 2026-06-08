@@ -86,29 +86,51 @@ async function unenrollFromCourse(courseId) {
 }
 
 async function getEnrolledCourses() {
-	const response = await api.get("/courses/enrolled/");
+	const response = await api.get("/enrollments/");
 	return response.data;
 }
 
 // Chapter-related API functions
-async function getChapter(courseId, chapterId) {
-	const response = await api.get(`/courses/${courseId}/chapters/${chapterId}/content/`);
+async function getChapters(courseId) {
+	const response = await api.get(`/courses/${courseId}/chapters/`);
 	return response.data;
 }
 
-async function createChapter(courseId, title, content) {
+async function getChapter(courseId, chapterId) {
+	const response = await api.get(`/courses/${courseId}/chapters/${chapterId}/`);
+	return response.data;
+}
+
+async function createChapter(
+	courseId,
+	title,
+	content,
+	number,
+	isPublic = false,
+) {
 	const response = await api.post(`/courses/${courseId}/chapters/`, {
 		title,
 		content,
+		number,
+		is_public: isPublic,
 	});
 
 	return response.data;
 }
 
-async function updateChapter(courseId, chapterId, title, content) {
+async function updateChapter(
+	courseId,
+	chapterId,
+	title,
+	content,
+	number,
+	isPublic = false,
+) {
 	const response = await api.put(`/courses/${courseId}/chapters/${chapterId}/`, {
 		title,
 		content,
+		number,
+		is_public: isPublic,
 	});
 
 	return response.data;
@@ -134,6 +156,7 @@ export {
 	enrollInCourse,
 	unenrollFromCourse,
 	getEnrolledCourses,
+	getChapters,
 	getChapter,
 	createChapter,
 	updateChapter,

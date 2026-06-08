@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import apiServices from "../lib/apiServices.js";
+import { getCurrentUser, login } from "../lib/apiServices.js";
 
 function Login() {
 	const [username, setUsername] = useState("");
@@ -15,20 +14,10 @@ function Login() {
 		setErrorMessage("");
 		setIsSubmitting(true);
 		try {
-			const response = await axios.post(
-				"http://localhost:8000/api/accounts/token/",
-				{
-					username,
-					password,
-				},
-			);
-			localStorage.setItem("accessToken", response.data.access);
-			localStorage.setItem("refreshToken", response.data.refresh);
+			await login(username, password);
+			const user = await getCurrentUser();
 
-			const userResponse = await apiServices.get("/accounts/me/");
-			const role = userResponse.data.role;
-
-			if (role === "instructor") {
+			if (user.role === "instructor") {
 				navigate("/dashboard/instructor");
 			} else {
 				navigate("/dashboard/student");
