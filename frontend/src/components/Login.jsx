@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Login() {
-	const [email, setemail] = useState("");
+	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
 
@@ -36,7 +36,7 @@ function Login() {
 						type="email"
 						id="email"
 						value={email}
-						onChange={(e) => setemail(e.target.value)}
+						onChange={(e) => setEmail(e.target.value)}
 						required
 					/>
 				</div>
