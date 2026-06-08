@@ -1,4 +1,6 @@
-import { AiOutlineDelete, AiOutlineEdit } from "react-icons/ai";
+import { useState } from "react";
+import { AiOutlineDelete, AiOutlineEdit, AiOutlineLeft } from "react-icons/ai";
+import { RichTextReadOnly } from "./RichText.jsx";
 import { getChapterPosts, getPostText } from "../lib/chapterUtils.js";
 
 function ChapterContentPanel({
@@ -8,11 +10,34 @@ function ChapterContentPanel({
 	onEditPost,
 	selectedChapter,
 }) {
+	const [openPostId, setOpenPostId] = useState(null);
+
 	if (!selectedChapter) {
 		return <p className="surface-message">{emptyMessage}</p>;
 	}
 
 	const posts = getChapterPosts(selectedChapter.content);
+	const openPost = posts.find((post) => post.id === openPostId) ?? null;
+
+	if (openPost) {
+		return (
+			<section className="chapter-content-area">
+				<button
+					className="content-back-button"
+					onClick={() => setOpenPostId(null)}
+					type="button"
+				>
+					<AiOutlineLeft aria-hidden="true" />
+					<span>Back</span>
+				</button>
+				<article className="content-reader">
+					<p className="learning-eyebrow">Chapter {selectedChapter.number ?? ""}</p>
+					<h3>{openPost.title}</h3>
+					<RichTextReadOnly value={openPost.body} />
+				</article>
+			</section>
+		);
+	}
 
 	return (
 		<section className="chapter-content-area">
@@ -30,37 +55,41 @@ function ChapterContentPanel({
 			:	<div className="content-post-grid">
 					{posts.map((post) => (
 						<article className="content-post-card" key={post.id}>
-							<div className="content-post-paper" aria-hidden="true">
-								<PostPreviewLines body={post.body} />
-							</div>
-							<div className="content-post-footer">
+							<button
+								className="content-post-open"
+								onClick={() => setOpenPostId(post.id)}
+								type="button"
+							>
+								<div className="content-post-paper" aria-hidden="true">
+									<PostPreviewLines body={post.body} />
+								</div>
 								<div>
 									<h4>{post.title}</h4>
 									<p>{getPostText(post.body) || "No body text"}</p>
 								</div>
-								{mode === "edit" && (
-									<div className="content-post-actions">
-										<button
-											aria-label={`Edit ${post.title}`}
-											className="content-post-action"
-											onClick={() => onEditPost(post)}
-											title={`Edit ${post.title}`}
-											type="button"
-										>
-											<AiOutlineEdit aria-hidden="true" />
-										</button>
-										<button
-											aria-label={`Delete ${post.title}`}
-											className="content-post-action danger"
-											onClick={() => onDeletePost(post)}
-											title={`Delete ${post.title}`}
-											type="button"
-										>
-											<AiOutlineDelete aria-hidden="true" />
-										</button>
-									</div>
-								)}
-							</div>
+							</button>
+							{mode === "edit" && (
+								<div className="content-post-actions">
+									<button
+										aria-label={`Edit ${post.title}`}
+										className="content-post-action"
+										onClick={() => onEditPost(post)}
+										title={`Edit ${post.title}`}
+										type="button"
+									>
+										<AiOutlineEdit aria-hidden="true" />
+									</button>
+									<button
+										aria-label={`Delete ${post.title}`}
+										className="content-post-action danger"
+										onClick={() => onDeletePost(post)}
+										title={`Delete ${post.title}`}
+										type="button"
+									>
+										<AiOutlineDelete aria-hidden="true" />
+									</button>
+								</div>
+							)}
 						</article>
 					))}
 				</div>

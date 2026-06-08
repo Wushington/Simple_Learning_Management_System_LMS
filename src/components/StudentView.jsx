@@ -4,7 +4,7 @@ import EnrollmentForm from "./EnrollmentForm.jsx";
 import Navbar from "./Navbar.jsx";
 import PopoutContainer from "./PopoutContainer.jsx";
 import {
-	enrollInCourse,
+	enrollInCourseByCode,
 	getChapters,
 	getCourses,
 	getEnrolledCourses,
@@ -65,7 +65,7 @@ function StudentView() {
 		setError("");
 
 		try {
-			await enrollInCourse(courseCode.trim().toUpperCase());
+			await enrollInCourseByCode(courseCode.trim().toUpperCase());
 			setFormMode(null);
 			await loadCourses();
 		} catch (requestError) {

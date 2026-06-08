@@ -63,6 +63,16 @@ function RichText({ initialValue = DEFAULT_EDITOR_VALUE, onChange }) {
 	);
 }
 
+function RichTextReadOnly({ value = DEFAULT_EDITOR_VALUE }) {
+	return (
+		<div className="plate-readonly">
+			{normalizeEditorValue(value).map((node, index) => (
+				<ReadOnlyNode key={`${node.type ?? "p"}-${index}`} node={node} />
+			))}
+		</div>
+	);
+}
+
 function ToolbarButton({ children, label, onClick }) {
 	return (
 		<button
@@ -127,4 +137,46 @@ function normalizeEditorValue(value) {
 	return Array.isArray(value) && value.length > 0 ? value : DEFAULT_EDITOR_VALUE;
 }
 
+function ReadOnlyNode({ node }) {
+	const children = Array.isArray(node.children) ?
+		node.children.map((child, index) => (
+			<ReadOnlyLeaf key={index} leaf={child} />
+		))
+	:	null;
+
+	switch (node.type) {
+		case "h2":
+			return <h2 className="post-render-heading readonly">{children}</h2>;
+		case "blockquote":
+			return <blockquote className="post-render-quote">{children}</blockquote>;
+		case "ul":
+			return (
+				<ul className="post-render-list">
+					<li>{children}</li>
+				</ul>
+			);
+		default:
+			return <p>{children}</p>;
+	}
+}
+
+function ReadOnlyLeaf({ leaf }) {
+	let content = leaf.text ?? "";
+
+	if (leaf.bold) {
+		content = <strong>{content}</strong>;
+	}
+
+	if (leaf.italic) {
+		content = <em>{content}</em>;
+	}
+
+	if (leaf.underline) {
+		content = <u>{content}</u>;
+	}
+
+	return content;
+}
+
+export { RichTextReadOnly };
 export default RichText;
