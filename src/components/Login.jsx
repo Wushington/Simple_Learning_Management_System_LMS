@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import apiServices from "../lib/apiServices.js";
 
 function Login() {
 	const [username, setUsername] = useState("");
@@ -23,7 +24,15 @@ function Login() {
 			);
 			localStorage.setItem("accessToken", response.data.access);
 			localStorage.setItem("refreshToken", response.data.refresh);
-			navigate("/dashboard");
+
+			const userResponse = await apiServices.get("/accounts/me/");
+			const role = userResponse.data.role;
+
+			if (role === "instructor") {
+				navigate("/dashboard/instructor");
+			} else {
+				navigate("/dashboard/student");
+			}
 		} catch (error) {
 			console.error("Login failed:", error);
 			setErrorMessage("Login failed. Username or password is incorrect.");
