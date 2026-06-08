@@ -1,6 +1,4 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -31,11 +29,23 @@ def is_enrolled(user, course):
     )
 
 
-class CourseListCreateView(APIView):
-    permission_classes = [AllowAny]
+def get_course_or_404(pk):
+    try:
+        return Course.objects.get(pk=pk)
+    except Course.DoesNotExist:
+        return None
 
+
+def get_chapter_or_404(course_pk, chapter_pk):
+    try:
+        return Chapter.objects.get(pk=chapter_pk, course__pk=course_pk)
+    except Chapter.DoesNotExist:
+        return None
+
+
+class CourseListView(APIView):
     def get(self, request):
-        courses = Course.objects.select_related("instructor").all()
+        courses = Course.objects.all()
         serializer = CourseSerializer(courses, many=True)
         return Response(serializer.data)
 
@@ -47,39 +57,58 @@ class CourseListCreateView(APIView):
             )
 
         serializer = CourseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(instructor=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            course = serializer.save(instructor=request.user)
+            return Response(
+                CourseSerializer(course).data,
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CourseDetailView(APIView):
-    permission_classes = [AllowAny]
+    def get(self, request, pk):
+        course = get_course_or_404(pk)
+        if course is None:
+            return Response(
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-    def get(self, request, course_id):
-        course = get_object_or_404(Course, id=course_id)
         serializer = CourseSerializer(course)
         return Response(serializer.data)
 
-    def patch(self, request, course_id):
-        course = get_object_or_404(Course, id=course_id)
+    def put(self, request, pk):
+        course = get_course_or_404(pk)
+        if course is None:
+            return Response(
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not is_course_owner(request.user, course):
             return Response(
-                {"detail": "Only this course's instructor can edit it."},
+                {"detail": "Only the course instructor can update this course."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = CourseSerializer(course, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        serializer = CourseSerializer(course, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, course_id):
-        course = get_object_or_404(Course, id=course_id)
+    def delete(self, request, pk):
+        course = get_course_or_404(pk)
+        if course is None:
+            return Response(
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not is_course_owner(request.user, course):
             return Response(
-                {"detail": "Only this course's instructor can delete it."},
+                {"detail": "Only the course instructor can delete this course."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -87,107 +116,145 @@ class CourseDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CourseJoinView(APIView):
-    def post(self, request, course_id):
-        if not is_student(request.user):
+class ChapterListView(APIView):
+    def get(self, request, course_pk):
+        course = get_course_or_404(course_pk)
+        if course is None:
             return Response(
-                {"detail": "Only students can join courses."},
-                status=status.HTTP_403_FORBIDDEN,
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
             )
-
-        course = get_object_or_404(Course, id=course_id)
-        enrollment, created = Enrollment.objects.get_or_create(
-            student=request.user,
-            course=course,
-        )
-
-        if not created:
-            return Response(
-                {"detail": "You are already enrolled in this course."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        serializer = EnrollmentSerializer(enrollment)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class CourseChaptersView(APIView):
-    def get(self, request, course_id):
-        course = get_object_or_404(Course, id=course_id)
 
         if is_course_owner(request.user, course):
-            chapters = course.chapters.all()
+            chapters = Chapter.objects.filter(course=course)
         elif is_enrolled(request.user, course):
-            chapters = course.chapters.filter(is_public=True)
+            chapters = Chapter.objects.filter(course=course, hidden=False)
         else:
             return Response(
-                {"detail": "Join this course to read its public chapters."},
+                {"detail": "You do not have permission to view chapters of this course."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = ChapterSerializer(chapters, many=True)
         return Response(serializer.data)
 
-    def post(self, request, course_id):
-        course = get_object_or_404(Course, id=course_id)
+    def post(self, request, course_pk):
+        course = get_course_or_404(course_pk)
+        if course is None:
+            return Response(
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not is_course_owner(request.user, course):
             return Response(
-                {"detail": "Only this course's instructor can add chapters."},
+                {"detail": "Only the course instructor can add chapters."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = ChapterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(course=course)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            chapter = serializer.save(course=course)
+            return Response(
+                ChapterSerializer(chapter).data,
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChapterDetailView(APIView):
-    def get_chapter(self, chapter_id):
-        return get_object_or_404(
-            Chapter.objects.select_related("course", "course__instructor"),
-            id=chapter_id,
-        )
-
-    def get(self, request, chapter_id):
-        chapter = self.get_chapter(chapter_id)
-        course = chapter.course
+    def get(self, request, course_pk, chapter_pk):
+        chapter = get_chapter_or_404(course_pk, chapter_pk)
+        if chapter is None:
+            return Response(
+                {"detail": "Chapter not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not (
-            is_course_owner(request.user, course)
-            or (chapter.is_public and is_enrolled(request.user, course))
+            is_course_owner(request.user, chapter.course)
+            or (is_enrolled(request.user, chapter.course) and not chapter.hidden)
         ):
             return Response(
-                {"detail": "You cannot read this chapter."},
+                {"detail": "You do not have permission to view this chapter."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = ChapterSerializer(chapter)
         return Response(serializer.data)
 
-    def patch(self, request, chapter_id):
-        chapter = self.get_chapter(chapter_id)
+    def put(self, request, course_pk, chapter_pk):
+        chapter = get_chapter_or_404(course_pk, chapter_pk)
+        if chapter is None:
+            return Response(
+                {"detail": "Chapter not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not is_course_owner(request.user, chapter.course):
             return Response(
-                {"detail": "Only this course's instructor can edit chapters."},
+                {"detail": "Only the course instructor can update this chapter."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = ChapterSerializer(chapter, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        serializer = ChapterSerializer(chapter, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, chapter_id):
-        chapter = self.get_chapter(chapter_id)
+    def delete(self, request, course_pk, chapter_pk):
+        chapter = get_chapter_or_404(course_pk, chapter_pk)
+        if chapter is None:
+            return Response(
+                {"detail": "Chapter not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not is_course_owner(request.user, chapter.course):
             return Response(
-                {"detail": "Only this course's instructor can delete chapters."},
+                {"detail": "Only the course instructor can delete this chapter."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         chapter.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EnrollCourseView(APIView):
+    def post(self, request, course_pk):
+        course = get_course_or_404(course_pk)
+        if course is None:
+            return Response(
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not is_student(request.user):
+            return Response(
+                {"detail": "Only students can enroll in courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if Enrollment.objects.filter(student=request.user, course=course).exists():
+            return Response(
+                {"detail": "You are already enrolled in this course."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        enrollment = Enrollment.objects.create(student=request.user, course=course)
+        serializer = EnrollmentSerializer(enrollment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class EnrollmentListView(APIView):
+    def get(self, request):
+        if not is_student(request.user):
+            return Response(
+                {"detail": "Only students can view their enrollments."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        enrollments = Enrollment.objects.filter(student=request.user)
+        serializer = EnrollmentSerializer(enrollments, many=True)
+        return Response(serializer.data)

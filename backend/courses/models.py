@@ -1,40 +1,43 @@
-from django.conf import settings
 from django.db import models
+from django.conf import settings
 
 
+# Create your models here.
 class Course(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
     instructor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="courses_taught",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-created_at", "title"]
 
     def __str__(self):
         return self.title
 
 
 class Chapter(models.Model):
+    number = models.PositiveIntegerField(default=1)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
         related_name="chapters",
     )
-    title = models.CharField(max_length=200)
-    content = models.JSONField(default=list, blank=True)
-    is_public = models.BooleanField(default=False)
-    order = models.PositiveIntegerField(default=0)
+    hidden = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["order", "id"]
+        ordering = ["course", "number", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course", "number"],
+                name="unique_chapter_number_per_course",
+            )
+        ]
 
     def __str__(self):
-        return f"{self.course.title} - {self.title}"
+        return f"Chapter {self.number}: {self.title}"
 
 
 class Enrollment(models.Model):
@@ -48,11 +51,10 @@ class Enrollment(models.Model):
         on_delete=models.CASCADE,
         related_name="enrollments",
     )
-    joined_at = models.DateTimeField(auto_now_add=True)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("student", "course")
-        ordering = ["-joined_at"]
 
     def __str__(self):
         return f"{self.student.username} enrolled in {self.course.title}"

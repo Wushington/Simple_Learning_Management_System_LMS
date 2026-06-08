@@ -2,20 +2,31 @@ from django.urls import path
 
 from .views import (
     ChapterDetailView,
-    CourseChaptersView,
+    ChapterListView,
     CourseDetailView,
-    CourseJoinView,
-    CourseListCreateView,
+    CourseListView,
+    EnrollCourseView,
+    EnrollmentListView,
 )
 
+
 urlpatterns = [
-    path("courses/", CourseListCreateView.as_view(), name="course-list-create"),
-    path("courses/<int:course_id>/", CourseDetailView.as_view(), name="course-detail"),
-    path("courses/<int:course_id>/join/", CourseJoinView.as_view(), name="course-join"),
+    path("courses/", CourseListView.as_view(), name="course-list"),
+    path("courses/<int:pk>/", CourseDetailView.as_view(), name="course-detail"),
     path(
-        "courses/<int:course_id>/chapters/",
-        CourseChaptersView.as_view(),
-        name="course-chapters",
+        "courses/<int:course_pk>/chapters/",
+        ChapterListView.as_view(),
+        name="chapter-list",
     ),
-    path("chapters/<int:chapter_id>/", ChapterDetailView.as_view(), name="chapter-detail"),
+    path(
+        "courses/<int:course_pk>/chapters/<int:chapter_pk>/",
+        ChapterDetailView.as_view(),
+        name="chapter-detail",
+    ),
+    path(
+        "courses/<int:course_pk>/enroll/",
+        EnrollCourseView.as_view(),
+        name="enroll-course",
+    ),
+    path("enrollments/", EnrollmentListView.as_view(), name="enrollment-list"),
 ]
