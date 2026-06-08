@@ -23,7 +23,7 @@ function Login() {
 			);
 			localStorage.setItem("accessToken", response.data.access);
 			localStorage.setItem("refreshToken", response.data.refresh);
-			navigate("/");
+			navigate("/dashboard");
 		} catch (error) {
 			console.error("Login failed:", error);
 			setErrorMessage("Login failed. Username or password is incorrect.");
