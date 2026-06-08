@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Register() {
@@ -66,10 +66,10 @@ function Register() {
 						/>
 					</div>
 					<div className="form-group">
-						<label htmlFor="password">Confirm Password:</label>
+						<label htmlFor="confirm-password">Confirm Password:</label>
 						<input
 							type="password"
-							id="password"
+							id="confirm-password"
 							value={confirmPassword}
 							onChange={(e) => setConfirmPassword(e.target.value)}
 							required
@@ -77,7 +77,7 @@ function Register() {
 					</div>
 					<button type="submit">Create Account</button>
 				</form>
-				<a href="/login">Already have an account? Login here.</a>
+				<Link to="/login">Already have an account? Login here.</Link>
 			</div>
 		);
 }

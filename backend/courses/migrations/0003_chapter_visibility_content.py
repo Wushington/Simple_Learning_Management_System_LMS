@@ -11,7 +11,7 @@ def copy_visibility(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("courses", "0002_chapter_hidden_alter_chapter_number_enrollment"),
+        ("courses", "0002_chapter_enrollment"),
     ]
 
     operations = [
