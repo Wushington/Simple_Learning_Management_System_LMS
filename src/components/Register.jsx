@@ -8,13 +8,46 @@ function Register() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("student");
+    const [errorMessage, setErrorMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
+
+    const formatErrorMessages = (data) => {
+        if (!data) {
+            return "Registration failed. Please try again.";
+        }
+
+        if (typeof data === "string") {
+            return data;
+        }
+
+        if (Array.isArray(data)) {
+            return data.join(" ");
+        }
+
+        return Object.entries(data)
+            .map(([field, value]) => {
+                const label = field === "non_field_errors"
+                    ? "Error"
+                    : field.charAt(0).toUpperCase() + field.slice(1);
+                const message = Array.isArray(value)
+                    ? value.join(" ")
+                    : String(value);
+
+                return `${label}: ${message}`;
+            })
+            .join(" ");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setErrorMessage("");
         if (password !== confirmPassword) {
-            alert("Passwords do not match.");
+            setErrorMessage("Passwords do not match.");
             return;
         }
+
+        setIsSubmitting(true);
         try {
             await axios.post(
                 "http://localhost:8000/api/accounts/register/",
@@ -29,7 +62,9 @@ function Register() {
             navigate("/login");
         } catch (error) {
             console.error("Registration failed:", error);
-            alert("Registration failed. Please try again.");
+            setErrorMessage(formatErrorMessages(error.response?.data));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -37,6 +72,11 @@ function Register() {
         <main className="auth-page">
             <div className="auth-container">
                 <h2>Create an Account</h2>
+                {errorMessage && (
+                    <p className="form-error" role="alert">
+                        {errorMessage}
+                    </p>
+                )}
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label htmlFor="username">Username:</label>
@@ -89,7 +129,9 @@ function Register() {
                             <option value="instructor">Instructor</option>
                         </select>
                     </div>
-                    <button type="submit">Register</button>
+                    <button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Registering..." : "Register"}
+                    </button>
                 </form>
                 <Link className="form-link" to="/login">
                     Already have an account? Login here.
