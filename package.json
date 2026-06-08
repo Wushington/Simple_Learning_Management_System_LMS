@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "simple-learning-management-system-lms",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "vite build --base=/Simple_Learning_Management_System_LMS/",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

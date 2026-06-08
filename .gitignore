@@ -1,138 +1,65 @@
-# ---------- Node / React ----------
+# Node / Vite
 node_modules/
-/.pnp/
-.pnp.js
 dist/
+dist-ssr/
 build/
 coverage/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-lock.yaml
-
-# dotenv environment variables
-.env
-.env.*.local
-.env.local
-
-# Next.js build output
-.next/
-.next/cache/
-
-# Parcel cache
-.parcel-cache/
-
-# IDEs and editors
-.idea/
-.vscode/
-*.sublime-workspace
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# ---------- Python / Django ----------
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-/lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-venv/
-env/
-ENV/
-venv.bak/
-venv3/
-/.venv/
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-media/
-staticfiles/
-static/
-# If using Django collectstatic to a folder inside project
-collected_static/
-
-# Django migrations (optionally keep migrations under version control)
-# If you want to track migrations, remove the following lines
-*/migrations/__pycache__/
-*/migrations/*.py[cod]
-*/migrations/*~
-
-# Pytest
-.pytest_cache/
-
-# Coverage
-.coverage
-.coverage.*
-htmlcov/
-.hypothesis/
-
-# Logs
-*.log
-
-# Editor directories and files
-*.swp
-*.swo
-*.bak
-
-# Mac files
-.DS_Store
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Docker
-docker-compose.override.yml
-
-# Ignore environment files often used for deployments
-env.local
-
-# Logs
-logs
-*.log
+*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+pnpm-lock.yaml
 
-node_modules
-dist
-dist-ssr
-*.local
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
+staticfiles/
+collected_static/
+local_settings.py
 
-# Editor directories and files
+# Environment files
+.env
+.env.local
+.env.*.local
+env.local
+
+# Logs
+logs/
+*.log
+
+# Editors and OS files
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
+*.sublime-workspace
+*.swp
+*.swo
+*.bak
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Docker
+docker-compose.override.yml

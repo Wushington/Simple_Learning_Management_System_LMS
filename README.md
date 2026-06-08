@@ -15,6 +15,14 @@ The main learning goal was to understand how models, serializers, views, permiss
 - Frontend: React, Vite, Axios
 - Rich text content: Plate.js JSON stored in Django's `JSONField`
 
+## Project Structure
+
+- `backend/` - Django project, apps, API routes, and migrations
+- `src/` - React application source
+- `public/` - static frontend assets copied into the Vite build
+- `.github/workflows/` - GitHub Actions deployment workflow
+- `dist/` - generated frontend build output; ignored by git
+
 ## Current Features
 
 - Users can register with a role of `student` or `instructor`.
@@ -124,10 +132,11 @@ python manage.py runserver
 ### Frontend
 
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
+
+The React app now lives at the repository root. For GitHub Pages, push to `main` and let the workflow build `dist/` and publish the compiled app.
 
 ## Reference Links
 
