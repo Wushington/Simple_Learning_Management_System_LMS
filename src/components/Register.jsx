@@ -7,6 +7,7 @@ function Register() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [role, setRole] = useState("student");
     const navigate = useNavigate();
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -21,6 +22,7 @@ function Register() {
                     username,
                     email,
                     password,
+                    role,
                 },
             );
             alert("Registration successful! Please log in.");
@@ -74,7 +76,18 @@ function Register() {
 							onChange={(e) => setConfirmPassword(e.target.value)}
 							required
 						/>
-					</div>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="role">Role:</label>
+                    <select
+                        id="role"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                    >
+                        <option value="student">Student</option>
+                        <option value="instructor">Instructor</option>
+                    </select>
+                </div>
 					<button type="submit">Create Account</button>
 				</form>
 				<Link to="/login">Already have an account? Login here.</Link>
