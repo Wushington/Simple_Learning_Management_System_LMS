@@ -7,12 +7,12 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? '/Simple_Learning_Management_System_LMS/' : '/',
+export default defineConfig(({ mode }) => ({
+  base: mode === 'production' ? '/Simple_Learning_Management_System_LMS/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
-})
+}))
