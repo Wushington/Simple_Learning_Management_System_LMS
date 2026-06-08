@@ -8,6 +8,7 @@ import {
 	getChapters,
 	getCourses,
 	getEnrolledCourses,
+	unenrollFromCourse,
 } from "../lib/apiServices.js";
 
 function StudentView() {
@@ -75,6 +76,25 @@ function StudentView() {
 		}
 	}
 
+	async function handleLeaveCourse(course) {
+		const shouldLeave = window.confirm(`Leave "${course.title}"?`);
+		if (!shouldLeave) {
+			return;
+		}
+
+		setError("");
+
+		try {
+			await unenrollFromCourse(course.id);
+			setSelectedChapter(null);
+			await loadCourses();
+		} catch (requestError) {
+			setError(
+				requestError.response?.data?.detail ?? "Could not leave the course.",
+			);
+		}
+	}
+
 	return (
 		<section className="learning-shell">
 			<Navbar
@@ -84,6 +104,7 @@ function StudentView() {
 				newActionLabel="Enroll"
 				onAddCourse={openEnrollForm}
 				onChapterSelect={setSelectedChapter}
+				onLeaveCourse={handleLeaveCourse}
 				selectedChapterId={selectedChapter?.id}
 			/>
 

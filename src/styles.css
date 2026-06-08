@@ -456,7 +456,7 @@ input[type="checkbox"] {
 	align-items: center;
 	border-radius: 6px;
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) repeat(2, auto);
+	grid-template-columns: minmax(0, 1fr) repeat(3, auto);
 }
 
 .nav-item-row:hover,
@@ -528,6 +528,11 @@ input[type="checkbox"] {
 	box-shadow: none;
 	color: var(--color-primary-deep);
 	transform: none;
+}
+
+.nav-item-action.danger:hover {
+	background-color: rgba(211, 47, 47, 0.1);
+	color: var(--color-error);
 }
 
 .copy-toast {
@@ -872,6 +877,17 @@ input[type="checkbox"] {
 	background-color: var(--color-border);
 	box-shadow: none;
 	color: var(--color-text);
+}
+
+.danger-action {
+	background-color: rgba(211, 47, 47, 0.1);
+	color: var(--color-error);
+}
+
+.danger-action:hover {
+	background-color: rgba(211, 47, 47, 0.16);
+	box-shadow: none;
+	color: var(--color-error);
 }
 
 .popout-backdrop {

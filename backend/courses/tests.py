@@ -151,6 +151,28 @@ class CourseApiTests(APITestCase):
             Enrollment.objects.filter(student=self.student, course=self.course).exists()
         )
 
+    def test_student_can_unenroll_from_course(self):
+        Enrollment.objects.create(student=self.student, course=self.course)
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.post(
+            reverse("unenroll-course", kwargs={"course_pk": self.course.pk}),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            Enrollment.objects.filter(student=self.student, course=self.course).exists()
+        )
+
+    def test_student_cannot_unenroll_from_course_twice(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.post(
+            reverse("unenroll-course", kwargs={"course_pk": self.course.pk}),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_invalid_course_code_returns_not_found(self):
         self.client.force_authenticate(user=self.student)
 

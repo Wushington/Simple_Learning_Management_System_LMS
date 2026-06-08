@@ -3,6 +3,7 @@ import { useState } from "react";
 function CourseForm({
 	initialCourse,
 	onCancel,
+	onDelete,
 	onSubmit,
 	submitLabel = "Save course",
 }) {
@@ -40,6 +41,11 @@ function CourseForm({
 				<button className="secondary-action" onClick={onCancel} type="button">
 					Cancel
 				</button>
+				{onDelete && (
+					<button className="danger-action" onClick={onDelete} type="button">
+						Delete course
+					</button>
+				)}
 			</div>
 		</form>
 	);

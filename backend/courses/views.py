@@ -270,6 +270,37 @@ class EnrollCourseView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+class UnenrollCourseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_pk):
+        course = course_exists(course_pk)
+        if course is None:
+            return Response(
+                {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not is_student(request.user):
+            return Response(
+                {"detail": "Only students can leave courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        enrollment = Enrollment.objects.filter(
+            student=request.user,
+            course=course,
+        ).first()
+        if enrollment is None:
+            return Response(
+                {"detail": "You are not enrolled in this course."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        enrollment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class EnrollCourseByCodeView(APIView):
     permission_classes = [IsAuthenticated]
 

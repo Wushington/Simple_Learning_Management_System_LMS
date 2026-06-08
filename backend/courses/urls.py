@@ -8,6 +8,7 @@ from .views import (
     EnrollCourseByCodeView,
     EnrollCourseView,
     EnrollmentListView,
+    UnenrollCourseView,
 )
 
 
@@ -28,6 +29,11 @@ urlpatterns = [
         "courses/<int:course_pk>/enroll/",
         EnrollCourseView.as_view(),
         name="enroll-course",
+    ),
+    path(
+        "courses/<int:course_pk>/unenroll/",
+        UnenrollCourseView.as_view(),
+        name="unenroll-course",
     ),
     path(
         "courses/enroll-by-code/",

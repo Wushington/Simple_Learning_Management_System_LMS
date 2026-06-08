@@ -3,9 +3,17 @@ import {
 	AiOutlineEllipsis,
 	AiOutlineFileText,
 } from "react-icons/ai";
-import { BiCopy } from "react-icons/bi";
+import { BiCopy, BiLogOut } from "react-icons/bi";
 
-function NavItem({ isCodeCopied = false, item, isActive, onClick, onCopyCode, onEdit }) {
+function NavItem({
+	isCodeCopied = false,
+	item,
+	isActive,
+	onClick,
+	onCopyCode,
+	onEdit,
+	onLeave,
+}) {
 	const Icon = item.type === "course" ? AiOutlineBook : AiOutlineFileText;
 	const rowClassName = ["nav-item-row", isActive ? "active" : ""]
 		.filter(Boolean)
@@ -42,6 +50,17 @@ function NavItem({ isCodeCopied = false, item, isActive, onClick, onCopyCode, on
 					type="button"
 				>
 					<AiOutlineEllipsis aria-hidden="true" />
+				</button>
+			)}
+			{onLeave && (
+				<button
+					aria-label={`Leave ${item.title}`}
+					className="nav-item-action danger"
+					onClick={onLeave}
+					title={`Leave ${item.title}`}
+					type="button"
+				>
+					<BiLogOut aria-hidden="true" />
 				</button>
 			)}
 		</div>

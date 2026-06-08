@@ -11,6 +11,7 @@ function Navbar({
 	onEditCourse,
 	onEditChapter,
 	onCourseSelect,
+	onLeaveCourse,
 	newActionLabel = "New",
 	canEditCourses = false,
 	canEditChapters = false,
@@ -120,6 +121,9 @@ function Navbar({
 											canEditCourses && onEditCourse ?
 												() => onEditCourse(item)
 											:	undefined
+										}
+										onLeave={
+											onLeaveCourse ? () => onLeaveCourse(item) : undefined
 										}
 										onClick={handleItemClick}
 									/>

@@ -3,6 +3,7 @@ import { useState } from "react";
 function ChapterForm({
 	initialChapter,
 	onCancel,
+	onDelete,
 	onSubmit,
 	showVisibility = true,
 	submitLabel = "Save chapter",
@@ -43,6 +44,11 @@ function ChapterForm({
 				<button className="secondary-action" onClick={onCancel} type="button">
 					Cancel
 				</button>
+				{onDelete && (
+					<button className="danger-action" onClick={onDelete} type="button">
+						Delete chapter
+					</button>
+				)}
 			</div>
 		</form>
 	);

@@ -9,6 +9,8 @@ import PopoutContainer from "./PopoutContainer.jsx";
 import {
 	createChapter,
 	createCourse,
+	deleteChapter,
+	deleteCourse,
 	getChapters,
 	getCourses,
 	getCurrentUser,
@@ -126,6 +128,27 @@ function InstructorView() {
 		}
 	}
 
+	async function handleDeleteCourse() {
+		const course = formMode.course;
+		const shouldDelete = window.confirm(`Delete "${course.title}"?`);
+		if (!shouldDelete) {
+			return;
+		}
+
+		setError("");
+
+		try {
+			await deleteCourse(course.id);
+			setSelectedChapter(null);
+			closePopout();
+			await loadCourses();
+		} catch (requestError) {
+			setError(
+				requestError.response?.data?.detail ?? "Could not delete the course.",
+			);
+		}
+	}
+
 	async function handleCreateChapter(chapterFields) {
 		setError("");
 
@@ -170,6 +193,29 @@ function InstructorView() {
 		} catch (requestError) {
 			setError(
 				requestError.response?.data?.detail ?? "Could not update the chapter.",
+			);
+		}
+	}
+
+	async function handleDeleteChapter() {
+		const chapter = formMode.chapter;
+		const shouldDelete = window.confirm(`Delete "${chapter.title}"?`);
+		if (!shouldDelete) {
+			return;
+		}
+
+		setError("");
+
+		try {
+			await deleteChapter(chapter.courseId, chapter.id);
+			if (selectedChapter?.id === chapter.id) {
+				setSelectedChapter(null);
+			}
+			closePopout();
+			await loadCourses();
+		} catch (requestError) {
+			setError(
+				requestError.response?.data?.detail ?? "Could not delete the chapter.",
 			);
 		}
 	}
@@ -309,6 +355,7 @@ function InstructorView() {
 					<CourseForm
 						initialCourse={formMode.course}
 						onCancel={closePopout}
+						onDelete={handleDeleteCourse}
 						onSubmit={handleUpdateCourse}
 						submitLabel="Save changes"
 					/>
@@ -333,6 +380,7 @@ function InstructorView() {
 					<ChapterForm
 						initialChapter={formMode.chapter}
 						onCancel={closePopout}
+						onDelete={handleDeleteChapter}
 						onSubmit={handleUpdateChapter}
 						submitLabel="Save changes"
 					/>
