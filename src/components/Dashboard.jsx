@@ -13,13 +13,19 @@ function Dashboard() {
 
 	return (
 		<div className="dashboard">
-			<h1>Welcome to the Dashboard</h1>
-			<p>This is a protected route. You can add your dashboard content here.</p>
-			<Routes>
-				<Route path="/" element={<Navigate to="/StudentView" replace />} />
-				<Route path="/InstructorView" element={<InstructorView />} />
-				<Route path="/StudentView" element={<StudentView />} />
-			</Routes>
+			<div className="dashboard-header">
+				<h1>Dashboard</h1>
+			</div>
+			<div className="dashboard-content">
+                <Routes>
+                    <Route path="/" element={<Navigate to="/student" replace />} />
+                    <Route path="/instructor" element={<InstructorView />} />
+                    <Route path="/student" element={<StudentView />} />
+                </Routes>
+            </div>
+            <div className="dashboard-footer">
+                <p>&copy; 2024 Simple LMS. All rights reserved.</p>
+            </div>
 		</div>
 	);
 }
