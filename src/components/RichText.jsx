@@ -1,76 +1,130 @@
 import {
 	BlockquotePlugin,
 	BoldPlugin,
-	H1Plugin,
 	H2Plugin,
-	H3Plugin,
 	ItalicPlugin,
 	UnderlinePlugin,
 } from "@platejs/basic-nodes/react";
-import { Plate, usePlateEditor } from "platejs/react";
+import { Plate, PlateContent, usePlateEditor } from "platejs/react";
 
-import { BlockquoteElement } from "@/components/ui/blockquote-node";
-import { Editor, EditorContainer } from "@/components/ui/editor";
-import { FixedToolbar } from "@/components/ui/fixed-toolbar";
-import { H1Element, H2Element, H3Element } from "@/components/ui/heading-node";
-import { MarkToolbarButton } from "@/components/ui/mark-toolbar-button";
-import { ToolbarButton } from "@/components/ui/toolbar";
+const DEFAULT_EDITOR_VALUE = [{ type: "p", children: [{ text: "" }] }];
 
-const initialValue = [];
-
-function RichText() {
+function RichText({ initialValue = DEFAULT_EDITOR_VALUE, onChange }) {
 	const editor = usePlateEditor({
 		plugins: [
 			BoldPlugin,
 			ItalicPlugin,
 			UnderlinePlugin,
-			H1Plugin.withComponent(H1Element),
-			H2Plugin.withComponent(H2Element),
-			H3Plugin.withComponent(H3Element),
-			BlockquotePlugin.withComponent(BlockquoteElement),
+			H2Plugin,
+			BlockquotePlugin,
 		],
-		value: () => {
-			const savedValue = localStorage.getItem("installation-react-demo");
-			return savedValue ? JSON.parse(savedValue) : initialValue;
-		},
+		value: normalizeEditorValue(initialValue),
 	});
 
+	function toggleMark(mark) {
+		editor.tf.toggleMark(mark);
+	}
+
+	function toggleBlock(type) {
+		editor.tf.toggleBlock(type);
+	}
+
 	return (
-		<Plate
-			editor={editor}
-			onChange={({ value }) => {
-				localStorage.setItem("installation-react-demo", JSON.stringify(value));
-			}}
-		>
-			<FixedToolbar className="flex justify-start gap-1 rounded-t-lg">
-				<ToolbarButton onClick={() => editor.tf.h1.toggle()}>H1</ToolbarButton>
-				<ToolbarButton onClick={() => editor.tf.h2.toggle()}>H2</ToolbarButton>
-				<ToolbarButton onClick={() => editor.tf.h3.toggle()}>H3</ToolbarButton>
-				<ToolbarButton onClick={() => editor.tf.blockquote.toggle()}>
+		<div className="plate-editor">
+			<div className="plate-toolbar" role="toolbar" aria-label="Content tools">
+				<ToolbarButton label="Bold" onClick={() => toggleMark("bold")}>
+					B
+				</ToolbarButton>
+				<ToolbarButton label="Italic" onClick={() => toggleMark("italic")}>
+					<i>I</i>
+				</ToolbarButton>
+				<ToolbarButton label="Underline" onClick={() => toggleMark("underline")}>
+					<u>U</u>
+				</ToolbarButton>
+				<ToolbarButton label="Heading" onClick={() => toggleBlock("h2")}>
+					H2
+				</ToolbarButton>
+				<ToolbarButton label="Bulleted list" onClick={() => toggleBlock("ul")}>
+					List
+				</ToolbarButton>
+				<ToolbarButton label="Quote" onClick={() => toggleBlock("blockquote")}>
 					Quote
 				</ToolbarButton>
-				<MarkToolbarButton nodeType="bold" tooltip="Bold (⌘+B)">
-					B
-				</MarkToolbarButton>
-				<MarkToolbarButton nodeType="italic" tooltip="Italic (⌘+I)">
-					I
-				</MarkToolbarButton>
-				<MarkToolbarButton nodeType="underline" tooltip="Underline (⌘+U)">
-					U
-				</MarkToolbarButton>
-				<div className="flex-1" />
-				<ToolbarButton
-					className="px-2"
-					onClick={() => editor.tf.setValue(initialValue)}
-				>
-					Reset
-				</ToolbarButton>
-			</FixedToolbar>
-			<EditorContainer>
-				<Editor placeholder="Type your amazing content here..." />
-			</EditorContainer>
-		</Plate>
+			</div>
+			<Plate
+				editor={editor}
+				onChange={({ value }) => onChange(normalizeEditorValue(value))}
+				renderElement={renderElement}
+				renderLeaf={renderLeaf}
+			>
+				<PlateContent className="plate-content-editable" placeholder="Add content..." />
+			</Plate>
+		</div>
 	);
+}
+
+function ToolbarButton({ children, label, onClick }) {
+	return (
+		<button
+			aria-label={label}
+			className="plate-toolbar-button"
+			onMouseDown={(event) => {
+				event.preventDefault();
+				onClick();
+			}}
+			title={label}
+			type="button"
+		>
+			{children}
+		</button>
+	);
+}
+
+function renderElement({ attributes, children, element }) {
+	switch (element.type) {
+		case "h2":
+			return (
+				<h2 className="post-render-heading" {...attributes}>
+					{children}
+				</h2>
+			);
+		case "blockquote":
+			return (
+				<blockquote className="post-render-quote" {...attributes}>
+					{children}
+				</blockquote>
+			);
+		case "ul":
+			return (
+				<ul className="post-render-list">
+					<li {...attributes}>{children}</li>
+				</ul>
+			);
+		default:
+			return <p {...attributes}>{children}</p>;
+	}
+}
+
+function renderLeaf({ attributes, children, leaf }) {
+	let formattedChildren = children;
+
+	if (leaf.bold) {
+		formattedChildren = <strong>{formattedChildren}</strong>;
+	}
+
+	if (leaf.italic) {
+		formattedChildren = <em>{formattedChildren}</em>;
+	}
+
+	if (leaf.underline) {
+		formattedChildren = <u>{formattedChildren}</u>;
+	}
+
+	return <span {...attributes}>{formattedChildren}</span>;
+}
+
+function normalizeEditorValue(value) {
+	return Array.isArray(value) && value.length > 0 ? value : DEFAULT_EDITOR_VALUE;
 }
 
 export default RichText;

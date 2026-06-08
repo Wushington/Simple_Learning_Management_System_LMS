@@ -1,28 +1,35 @@
 import { useState } from "react";
-import { getChapterContentText } from "../lib/chapterUtils.js";
+import RichText from "./RichText.jsx";
+import { EMPTY_POST_CONTENT, normalizePostBody } from "../lib/chapterUtils.js";
 
-function ChapterContentForm({ initialChapter, onCancel, onSubmit }) {
-	const [content, setContent] = useState(
-		getChapterContentText(initialChapter?.content),
+function ChapterContentForm({ initialPost, onCancel, onSubmit }) {
+	const [title, setTitle] = useState(initialPost?.title ?? "");
+	const [body, setBody] = useState(
+		normalizePostBody(initialPost?.body ?? EMPTY_POST_CONTENT),
 	);
 
 	function handleSubmit(event) {
 		event.preventDefault();
-		onSubmit(content.trim());
+		onSubmit({
+			body,
+			title: title.trim() || "Untitled",
+		});
 	}
 
 	return (
-		<form className="learning-form" onSubmit={handleSubmit}>
-			<label htmlFor="chapter-content">Content</label>
-			<textarea
-				id="chapter-content"
-				onChange={(event) => setContent(event.target.value)}
-				placeholder="Add chapter content..."
-				rows={8}
-				value={content}
+		<form className="learning-form content-post-form" onSubmit={handleSubmit}>
+			<label htmlFor="content-title">Title</label>
+			<input
+				id="content-title"
+				onChange={(event) => setTitle(event.target.value)}
+				placeholder="Content title"
+				required
+				value={title}
 			/>
+			<label>Body</label>
+			<RichText initialValue={body} onChange={setBody} />
 			<div className="form-actions">
-				<button type="submit">Save content</button>
+				<button type="submit">Save post</button>
 				<button className="secondary-action" onClick={onCancel} type="button">
 					Cancel
 				</button>

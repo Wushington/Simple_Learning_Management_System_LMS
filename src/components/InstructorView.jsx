@@ -16,10 +16,12 @@ import {
 	updateCourse,
 } from "../lib/apiServices.js";
 import {
+	buildChapterPost,
+	buildChapterPostsContent,
 	EMPTY_CHAPTER_CONTENT,
+	getChapterPosts,
 	getNextChapterNumber,
 	isCourseOwnedByUser,
-	textToChapterContent,
 } from "../lib/chapterUtils.js";
 
 function InstructorView() {
@@ -83,8 +85,8 @@ function InstructorView() {
 		setError("");
 	}
 
-	function openContentForm(chapter) {
-		setFormMode({ type: "edit-content", chapter });
+	function openContentForm(chapter, post = null) {
+		setFormMode({ type: post ? "edit-content" : "create-content", chapter, post });
 		setError("");
 	}
 
@@ -172,18 +174,30 @@ function InstructorView() {
 		}
 	}
 
-	async function handleUpdateContent(contentText) {
+	async function handleSaveContentPost(postFields) {
 		setError("");
 
 		const chapter = formMode.chapter;
-		const content = textToChapterContent(contentText);
+		const posts = getChapterPosts(chapter.content);
+		const nextPosts =
+			formMode.post ?
+				posts.map((post) =>
+					post.id === formMode.post.id ?
+						{
+							...post,
+							...postFields,
+							updatedAt: new Date().toISOString(),
+						}
+					:	post,
+				)
+			:	[...posts, buildChapterPost(postFields)];
 
 		try {
 			const updatedChapter = await updateChapter(
 				chapter.courseId,
 				chapter.id,
 				chapter.title,
-				content.length > 0 ? content : EMPTY_CHAPTER_CONTENT,
+				buildChapterPostsContent(nextPosts),
 				chapter.number,
 				chapter.is_public,
 			);
@@ -193,6 +207,36 @@ function InstructorView() {
 		} catch (requestError) {
 			setError(
 				requestError.response?.data?.detail ?? "Could not update the content.",
+			);
+		}
+	}
+
+	async function handleDeleteContentPost(postToDelete) {
+		const shouldDelete = window.confirm(`Delete "${postToDelete.title}"?`);
+		if (!shouldDelete) {
+			return;
+		}
+
+		setError("");
+
+		const chapter = selectedChapter;
+		const posts = getChapterPosts(chapter.content);
+		const nextPosts = posts.filter((post) => post.id !== postToDelete.id);
+
+		try {
+			const updatedChapter = await updateChapter(
+				chapter.courseId,
+				chapter.id,
+				chapter.title,
+				buildChapterPostsContent(nextPosts),
+				chapter.number,
+				chapter.is_public,
+			);
+			setSelectedChapter({ ...updatedChapter, courseId: chapter.courseId });
+			await loadCourses();
+		} catch (requestError) {
+			setError(
+				requestError.response?.data?.detail ?? "Could not delete the content.",
 			);
 		}
 	}
@@ -232,7 +276,7 @@ function InstructorView() {
 						type="button"
 					>
 						<AiOutlinePlus aria-hidden="true" />
-						<span>Add content</span>
+						<span>Add</span>
 					</button>
 				</header>
 
@@ -243,6 +287,8 @@ function InstructorView() {
 					<ChapterContentPanel
 						emptyMessage="Select a chapter from the navbar to edit its content."
 						mode="edit"
+						onDeletePost={handleDeleteContentPost}
+						onEditPost={(post) => openContentForm(selectedChapter, post)}
 						selectedChapter={selectedChapter}
 					/>
 				)}
@@ -293,12 +339,16 @@ function InstructorView() {
 				</PopoutContainer>
 			)}
 
-			{formMode?.type === "edit-content" && (
-				<PopoutContainer onClose={closePopout} title="Add content">
+			{(formMode?.type === "create-content" ||
+				formMode?.type === "edit-content") && (
+				<PopoutContainer
+					onClose={closePopout}
+					title={formMode.type === "edit-content" ? "Edit post" : "Add post"}
+				>
 					<ChapterContentForm
-						initialChapter={formMode.chapter}
+						initialPost={formMode.post}
 						onCancel={closePopout}
-						onSubmit={handleUpdateContent}
+						onSubmit={handleSaveContentPost}
 					/>
 				</PopoutContainer>
 			)}

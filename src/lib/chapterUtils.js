@@ -1,21 +1,68 @@
 const EMPTY_CHAPTER_CONTENT = [{ type: "p", children: [{ text: "" }] }];
+const EMPTY_POST_CONTENT = [{ type: "p", children: [{ text: "" }] }];
+
+function buildChapterPost({ body = EMPTY_POST_CONTENT, id, title = "Untitled" }) {
+	const now = new Date().toISOString();
+
+	return {
+		id: id ?? crypto.randomUUID(),
+		title: title.trim() || "Untitled",
+		body: normalizePostBody(body),
+		createdAt: now,
+		updatedAt: now,
+	};
+}
+
+function buildChapterPostsContent(posts) {
+	return {
+		version: 1,
+		posts,
+	};
+}
 
 function getChapterContentText(content) {
-	const parsedContent =
-		typeof content === "string" ? parseContentString(content) : content;
+	return getChapterPosts(content)
+		.map((post) => getPostText(post.body))
+		.join("\n")
+		.trim();
+}
 
-	if (!parsedContent) {
-		return "";
+function getChapterPosts(content) {
+	const parsedContent = parseMaybeJson(content);
+
+	if (parsedContent?.posts && Array.isArray(parsedContent.posts)) {
+		return parsedContent.posts.map((post) => ({
+			...post,
+			body: normalizePostBody(post.body),
+		}));
 	}
 
 	if (Array.isArray(parsedContent)) {
-		return parsedContent.map(getNodeText).join("\n").trim();
+		const text = getPostText(parsedContent);
+
+		return text ?
+				[
+					{
+						id: "legacy-content",
+						title: "Content",
+						body: normalizePostBody(parsedContent),
+					},
+				]
+			:	[];
 	}
 
-	return getNodeText(parsedContent).trim();
+	return [];
 }
 
-function parseContentString(content) {
+function getPostText(body) {
+	return normalizePostBody(body).map(getNodeText).join("\n").trim();
+}
+
+function parseMaybeJson(content) {
+	if (typeof content !== "string") {
+		return content;
+	}
+
 	try {
 		return JSON.parse(content);
 	} catch {
@@ -43,12 +90,16 @@ function getNodeText(node) {
 	return "";
 }
 
+function normalizePostBody(body) {
+	return Array.isArray(body) && body.length > 0 ? body : EMPTY_POST_CONTENT;
+}
+
 function getNextChapterNumber(chapters = []) {
 	return Math.max(0, ...chapters.map((chapter) => chapter.number ?? 0)) + 1;
 }
 
 function textToChapterContent(text) {
-	return text
+	const body = text
 		.split(/\n{2,}/)
 		.map((paragraph) => paragraph.trim())
 		.filter(Boolean)
@@ -56,6 +107,13 @@ function textToChapterContent(text) {
 			type: "p",
 			children: [{ text: paragraph }],
 		}));
+
+	return buildChapterPostsContent([
+		buildChapterPost({
+			body,
+			title: "Content",
+		}),
+	]);
 }
 
 function isCourseOwnedByUser(course, user) {
@@ -71,8 +129,14 @@ function isCourseOwnedByUser(course, user) {
 
 export {
 	EMPTY_CHAPTER_CONTENT,
+	EMPTY_POST_CONTENT,
+	buildChapterPost,
+	buildChapterPostsContent,
 	getChapterContentText,
+	getChapterPosts,
+	getPostText,
 	getNextChapterNumber,
 	isCourseOwnedByUser,
+	normalizePostBody,
 	textToChapterContent,
 };
