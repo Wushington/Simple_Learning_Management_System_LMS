@@ -34,19 +34,19 @@ function Register() {
     };
 
     return (
-			<div className="register-container">
-				<h2>Register</h2>
+			<div className="auth-container">
+				<h2>Create an Account</h2>
 				<form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="username">Username:</label>
-                        <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                        />
-                    </div>
+					<div className="form-group">
+						<label htmlFor="username">Username:</label>
+						<input
+							type="text"
+							id="username"
+							value={username}
+							onChange={(e) => setUsername(e.target.value)}
+							required
+						/>
+					</div>
 					<div className="form-group">
 						<label htmlFor="email">Email:</label>
 						<input
@@ -76,21 +76,23 @@ function Register() {
 							onChange={(e) => setConfirmPassword(e.target.value)}
 							required
 						/>
-                </div>
-                <div className="form-group">
-                    <label htmlFor="role">Role:</label>
-                    <select
-                        id="role"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                    >
-                        <option value="student">Student</option>
-                        <option value="instructor">Instructor</option>
-                    </select>
-                </div>
-					<button type="submit">Create Account</button>
+					</div>
+					<div className="form-group">
+						<label htmlFor="role">Role:</label>
+						<select
+							id="role"
+							value={role}
+							onChange={(e) => setRole(e.target.value)}
+						>
+							<option value="student">Student</option>
+							<option value="instructor">Instructor</option>
+						</select>
+					</div>
+					<button type="submit">Register</button>
 				</form>
-				<Link to="/login">Already have an account? Login here.</Link>
+				<Link className="form-link" to="/login">
+					Already have an account? Login here.
+				</Link>
 			</div>
 		);
 }
