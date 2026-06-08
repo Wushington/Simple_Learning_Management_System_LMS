@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ChapterContentPanel from "./ChapterContentPanel.jsx";
 import EnrollmentForm from "./EnrollmentForm.jsx";
 import Navbar from "./Navbar.jsx";
@@ -12,21 +12,11 @@ import {
 
 function StudentView() {
 	const [courses, setCourses] = useState([]);
-	const [allCourses, setAllCourses] = useState([]);
 	const [selectedChapter, setSelectedChapter] = useState(null);
 	const [formMode, setFormMode] = useState(null);
-	const [selectedCourseId, setSelectedCourseId] = useState("");
+	const [courseCode, setCourseCode] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState("");
-
-	const enrolledCourseIds = useMemo(
-		() => new Set(courses.map((course) => course.id)),
-		[courses],
-	);
-
-	const availableCourses = allCourses.filter(
-		(course) => !enrolledCourseIds.has(course.id),
-	);
 
 	useEffect(() => {
 		loadCourses();
@@ -54,7 +44,6 @@ function StudentView() {
 				})),
 			);
 
-			setAllCourses(courseCatalog);
 			setCourses(coursesWithChapters);
 		} catch (requestError) {
 			setError(
@@ -67,7 +56,7 @@ function StudentView() {
 
 	function openEnrollForm() {
 		setFormMode("enroll");
-		setSelectedCourseId("");
+		setCourseCode("");
 		setError("");
 	}
 
@@ -76,7 +65,7 @@ function StudentView() {
 		setError("");
 
 		try {
-			await enrollInCourse(selectedCourseId);
+			await enrollInCourse(courseCode.trim().toUpperCase());
 			setFormMode(null);
 			await loadCourses();
 		} catch (requestError) {
@@ -124,11 +113,10 @@ function StudentView() {
 					title="Enroll in course"
 				>
 					<EnrollmentForm
-						availableCourses={availableCourses}
+						courseCode={courseCode}
 						onCancel={() => setFormMode(null)}
-						onCourseChange={setSelectedCourseId}
+						onCourseCodeChange={setCourseCode}
 						onSubmit={handleEnroll}
-						selectedCourseId={selectedCourseId}
 					/>
 				</PopoutContainer>
 			)}

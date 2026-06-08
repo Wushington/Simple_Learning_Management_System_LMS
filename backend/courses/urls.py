@@ -5,6 +5,7 @@ from .views import (
     ChapterListView,
     CourseDetailView,
     CourseListView,
+    EnrollCourseByCodeView,
     EnrollCourseView,
     EnrollmentListView,
 )
@@ -27,6 +28,11 @@ urlpatterns = [
         "courses/<int:course_pk>/enroll/",
         EnrollCourseView.as_view(),
         name="enroll-course",
+    ),
+    path(
+        "courses/enroll-by-code/",
+        EnrollCourseByCodeView.as_view(),
+        name="enroll-course-by-code",
     ),
     path("enrollments/", EnrollmentListView.as_view(), name="enrollment-list"),
 ]

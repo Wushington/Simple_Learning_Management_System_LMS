@@ -5,11 +5,19 @@ from .models import Chapter, Course, Enrollment
 
 class CourseSerializer(serializers.ModelSerializer):
     instructor = serializers.StringRelatedField(read_only=True)
+    course_code = serializers.SerializerMethodField()
+
+    def get_course_code(self, course):
+        request = self.context.get("request")
+        if request and request.user == course.instructor:
+            return course.course_code
+
+        return None
 
     class Meta:
         model = Course
-        fields = ["id", "title", "description", "instructor"]
-        read_only_fields = ["id", "instructor"]
+        fields = ["id", "title", "description", "instructor", "course_code"]
+        read_only_fields = ["id", "instructor", "course_code"]
 
 
 class ChapterSerializer(serializers.ModelSerializer):

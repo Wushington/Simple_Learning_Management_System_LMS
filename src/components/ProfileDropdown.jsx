@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BiChevronDown } from "react-icons/bi";
+import { BiLogOut } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "../lib/apiServices.js";
 
@@ -80,7 +81,8 @@ export default function ProfileDropdown() {
 					<ul className="menu-list">
 						<li>
 							<button onClick={handleLogout} className="menu-item logout-btn">
-								Logout
+								<BiLogOut aria-hidden="true" />
+								<span>Logout</span>
 							</button>
 						</li>
 					</ul>

@@ -52,7 +52,11 @@ class CourseListView(APIView):
 
     def get(self, request):
         courses = Course.objects.all()
-        serializer = CourseSerializer(courses, many=True)
+        serializer = CourseSerializer(
+            courses,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def post(self, request):
@@ -66,7 +70,7 @@ class CourseListView(APIView):
         if serializer.is_valid():
             course = serializer.save(instructor=request.user)
             return Response(
-                CourseSerializer(course).data,
+                CourseSerializer(course, context={"request": request}).data,
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -86,7 +90,7 @@ class CourseDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = CourseSerializer(course)
+        serializer = CourseSerializer(course, context={"request": request})
         return Response(serializer.data)
 
     def put(self, request, pk):
@@ -106,7 +110,9 @@ class CourseDetailView(APIView):
         serializer = CourseSerializer(course, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(
+                CourseSerializer(course, context={"request": request}).data
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
@@ -244,6 +250,42 @@ class EnrollCourseView(APIView):
         if course is None:
             return Response(
                 {"detail": "Course not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not is_student(request.user):
+            return Response(
+                {"detail": "Only students can enroll in courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if Enrollment.objects.filter(student=request.user, course=course).exists():
+            return Response(
+                {"detail": "You are already enrolled in this course."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        enrollment = Enrollment.objects.create(student=request.user, course=course)
+        serializer = EnrollmentSerializer(enrollment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class EnrollCourseByCodeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        course_code = str(request.data.get("course_code", "")).strip().upper()
+        if not course_code:
+            return Response(
+                {"detail": "Course code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            course = Course.objects.get(course_code=course_code)
+        except Course.DoesNotExist:
+            return Response(
+                {"detail": "No course found for that code."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 

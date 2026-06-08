@@ -64,6 +64,23 @@ class CourseApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["instructor"], str(self.instructor))
+        self.assertRegex(response.data["course_code"], r"^[A-Z0-9]{8}$")
+
+    def test_course_code_is_only_visible_to_owner(self):
+        self.client.force_authenticate(user=self.instructor)
+
+        response = self.client.get(reverse("course-list"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        course_data = next(course for course in response.data if course["id"] == self.course.id)
+        self.assertEqual(course_data["course_code"], self.course.course_code)
+
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get(reverse("course-list"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        course_data = next(course for course in response.data if course["id"] == self.course.id)
+        self.assertIsNone(course_data["course_code"])
 
     def test_only_course_owner_can_create_and_update_chapters(self):
         self.client.force_authenticate(user=self.other_instructor)
@@ -119,6 +136,31 @@ class CourseApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_student_can_enroll_by_course_code(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.post(
+            reverse("enroll-course-by-code"),
+            {"course_code": self.course.course_code.lower()},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            Enrollment.objects.filter(student=self.student, course=self.course).exists()
+        )
+
+    def test_invalid_course_code_returns_not_found(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.post(
+            reverse("enroll-course-by-code"),
+            {"course_code": "NOPE1234"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_enrolled_student_only_sees_public_chapters(self):
         Enrollment.objects.create(student=self.student, course=self.course)

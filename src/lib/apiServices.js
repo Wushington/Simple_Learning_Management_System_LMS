@@ -80,6 +80,13 @@ async function enrollInCourse(courseId) {
 	return response.data;
 }
 
+async function enrollInCourseByCode(courseCode) {
+	const response = await api.post("/courses/enroll-by-code/", {
+		course_code: courseCode,
+	});
+	return response.data;
+}
+
 async function unenrollFromCourse(courseId) {
 	const response = await api.post(`/courses/${courseId}/unenroll/`);
 	return response.data;
@@ -154,6 +161,7 @@ export {
 	updateCourse,
 	deleteCourse,
 	enrollInCourse,
+	enrollInCourseByCode,
 	unenrollFromCourse,
 	getEnrolledCourses,
 	getChapters,

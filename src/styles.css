@@ -279,8 +279,11 @@ input[type="checkbox"] {
 }
 
 .menu-item {
+	align-items: center;
 	border-radius: 6px;
 	box-sizing: border-box;
+	display: inline-flex;
+	gap: 0.45rem;
 	text-align: left;
 	width: 100%;
 }
@@ -484,10 +487,23 @@ input[type="checkbox"] {
 	transform: none;
 }
 
-.nav-item span {
+.nav-item-text {
+	display: grid;
+	gap: 0.2rem;
 	overflow: hidden;
+}
+
+.nav-item-text span {
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	overflow: hidden;
+}
+
+.nav-item-meta {
+	color: var(--color-text-light);
+	font-size: 0.78rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
 }
 
 .nav-item-icon {

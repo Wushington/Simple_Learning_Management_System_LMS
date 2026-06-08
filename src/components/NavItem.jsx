@@ -3,8 +3,9 @@ import {
 	AiOutlineEllipsis,
 	AiOutlineFileText,
 } from "react-icons/ai";
+import { BiCopy } from "react-icons/bi";
 
-function NavItem({ item, isActive, onClick, onEdit }) {
+function NavItem({ item, isActive, onClick, onCopyCode, onEdit }) {
 	const Icon = item.type === "course" ? AiOutlineBook : AiOutlineFileText;
 	const rowClassName = ["nav-item-row", isActive ? "active" : ""]
 		.filter(Boolean)
@@ -14,12 +15,28 @@ function NavItem({ item, isActive, onClick, onEdit }) {
 		<div className={rowClassName}>
 			<button className="nav-item" onClick={() => onClick(item)} type="button">
 				<Icon aria-hidden="true" className="nav-item-icon" />
-				<span>{item.title}</span>
+				<span className="nav-item-text">
+					<span>{item.title}</span>
+					{item.course_code && (
+						<span className="nav-item-meta">Code: {item.course_code}</span>
+					)}
+				</span>
 			</button>
+			{onCopyCode && (
+				<button
+					aria-label={`Copy course code for ${item.title}`}
+					className="nav-item-action"
+					onClick={onCopyCode}
+					title={`Copy code ${item.course_code}`}
+					type="button"
+				>
+					<BiCopy aria-hidden="true" />
+				</button>
+			)}
 			{onEdit && (
 				<button
 					aria-label={`Edit ${item.title}`}
-					className="nav-item-edit"
+					className="nav-item-action"
 					onClick={onEdit}
 					title={`Edit ${item.title}`}
 					type="button"
