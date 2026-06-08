@@ -18,6 +18,8 @@ function Navbar({
 	emptyChapterMessage = "No chapters yet.",
 }) {
 	const [selectedCourseId, setSelectedCourseId] = useState(null);
+	const [copiedCourseId, setCopiedCourseId] = useState(null);
+	const [showCopyToast, setShowCopyToast] = useState(false);
 	const selectedCourse =
 		courses.find((course) => course.id === selectedCourseId) ?? null;
 
@@ -47,6 +49,22 @@ function Navbar({
 		}
 
 		onAddCourse?.();
+	}
+
+	async function handleCopyCourseCode(course) {
+		if (!course.course_code) {
+			return;
+		}
+
+		await navigator.clipboard.writeText(course.course_code);
+		setCopiedCourseId(course.id);
+		setShowCopyToast(true);
+		window.setTimeout(() => {
+			setCopiedCourseId((currentCourseId) =>
+				currentCourseId === course.id ? null : currentCourseId,
+			);
+			setShowCopyToast(false);
+		}, 1400);
 	}
 
 	const courseItems = courses.map((course) => ({
@@ -92,6 +110,12 @@ function Navbar({
 									<NavItem
 										key={`${item.type}-${item.id}`}
 										item={item}
+										isCodeCopied={copiedCourseId === item.id}
+										onCopyCode={
+											item.course_code ?
+												() => handleCopyCourseCode(item)
+											:	undefined
+										}
 										onEdit={
 											canEditCourses && onEditCourse ?
 												() => onEditCourse(item)
@@ -141,6 +165,11 @@ function Navbar({
 					</div>
 				}
 			</section>
+			{showCopyToast && (
+				<div className="copy-toast" role="status">
+					Course Code Copied
+				</div>
+			)}
 		</nav>
 	);
 }

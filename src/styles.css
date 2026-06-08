@@ -456,7 +456,7 @@ input[type="checkbox"] {
 	align-items: center;
 	border-radius: 6px;
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr) repeat(2, auto);
 }
 
 .nav-item-row:hover,
@@ -510,7 +510,7 @@ input[type="checkbox"] {
 	font-size: 1.1rem;
 }
 
-.nav-item-edit {
+.nav-item-action {
 	align-items: center;
 	background-color: transparent;
 	border-radius: 6px;
@@ -523,11 +523,27 @@ input[type="checkbox"] {
 	width: 2rem;
 }
 
-.nav-item-edit:hover {
+.nav-item-action:hover {
 	background-color: rgba(115, 75, 157, 0.12);
 	box-shadow: none;
 	color: var(--color-primary-deep);
 	transform: none;
+}
+
+.copy-toast {
+	background-color: rgba(44, 41, 48, 0.82);
+	border-radius: 6px;
+	box-shadow: 0 10px 24px rgba(44, 41, 48, 0.16);
+	color: #ffffff;
+	font-size: 0.82rem;
+	font-weight: 800;
+	left: 50%;
+	padding: 0.45rem 0.7rem;
+	pointer-events: none;
+	position: fixed;
+	top: 5rem;
+	transform: translate(-50%, -50%);
+	z-index: 60;
 }
 
 .icon-button {

@@ -5,7 +5,7 @@ import {
 } from "react-icons/ai";
 import { BiCopy } from "react-icons/bi";
 
-function NavItem({ item, isActive, onClick, onCopyCode, onEdit }) {
+function NavItem({ isCodeCopied = false, item, isActive, onClick, onCopyCode, onEdit }) {
 	const Icon = item.type === "course" ? AiOutlineBook : AiOutlineFileText;
 	const rowClassName = ["nav-item-row", isActive ? "active" : ""]
 		.filter(Boolean)
@@ -27,7 +27,7 @@ function NavItem({ item, isActive, onClick, onCopyCode, onEdit }) {
 					aria-label={`Copy course code for ${item.title}`}
 					className="nav-item-action"
 					onClick={onCopyCode}
-					title={`Copy code ${item.course_code}`}
+					title={isCodeCopied ? "Copied" : `Copy code ${item.course_code}`}
 					type="button"
 				>
 					<BiCopy aria-hidden="true" />
