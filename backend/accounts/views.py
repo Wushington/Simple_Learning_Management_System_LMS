@@ -19,7 +19,7 @@ def get_user(request):
 def register_user(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.create_user(serializer.validated_data)
+        user = serializer.save()
         return Response(
             UserSerializer(user).data,
             status=status.HTTP_201_CREATED,

@@ -19,13 +19,13 @@ class Course(models.Model):
 class Chapter(models.Model):
     number = models.PositiveIntegerField(default=1)
     title = models.CharField(max_length=255)
-    content = models.TextField()
+    content = models.JSONField(default=list)
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
         related_name="chapters",
     )
-    hidden = models.BooleanField(default=True)
+    is_public = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["course", "number", "id"]
@@ -54,7 +54,12 @@ class Enrollment(models.Model):
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("student", "course")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "course"],
+                name="unique_student_enrollment_per_course",
+            )
+        ]
 
     def __str__(self):
         return f"{self.student.username} enrolled in {self.course.title}"

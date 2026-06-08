@@ -22,7 +22,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         validate_password(value)
         return value
 
-    def create_user(self, validated_data):
+    def create(self, validated_data):
         password = validated_data.pop("password")
         user = User(**validated_data)
         user.set_password(password)

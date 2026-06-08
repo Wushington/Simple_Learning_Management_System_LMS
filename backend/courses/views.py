@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -44,6 +45,11 @@ def get_chapter_or_404(course_pk, chapter_pk):
 
 
 class CourseListView(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
     def get(self, request):
         courses = Course.objects.all()
         serializer = CourseSerializer(courses, many=True)
@@ -67,6 +73,11 @@ class CourseListView(APIView):
 
 
 class CourseDetailView(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
     def get(self, request, pk):
         course = get_course_or_404(pk)
         if course is None:
@@ -117,6 +128,8 @@ class CourseDetailView(APIView):
 
 
 class ChapterListView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, course_pk):
         course = get_course_or_404(course_pk)
         if course is None:
@@ -128,7 +141,7 @@ class ChapterListView(APIView):
         if is_course_owner(request.user, course):
             chapters = Chapter.objects.filter(course=course)
         elif is_enrolled(request.user, course):
-            chapters = Chapter.objects.filter(course=course, hidden=False)
+            chapters = Chapter.objects.filter(course=course, is_public=True)
         else:
             return Response(
                 {"detail": "You do not have permission to view chapters of this course."},
@@ -163,6 +176,8 @@ class ChapterListView(APIView):
 
 
 class ChapterDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, course_pk, chapter_pk):
         chapter = get_chapter_or_404(course_pk, chapter_pk)
         if chapter is None:
@@ -173,7 +188,7 @@ class ChapterDetailView(APIView):
 
         if not (
             is_course_owner(request.user, chapter.course)
-            or (is_enrolled(request.user, chapter.course) and not chapter.hidden)
+            or (is_enrolled(request.user, chapter.course) and chapter.is_public)
         ):
             return Response(
                 {"detail": "You do not have permission to view this chapter."},
@@ -222,6 +237,8 @@ class ChapterDetailView(APIView):
 
 
 class EnrollCourseView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, course_pk):
         course = get_course_or_404(course_pk)
         if course is None:
@@ -248,6 +265,8 @@ class EnrollCourseView(APIView):
 
 
 class EnrollmentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         if not is_student(request.user):
             return Response(
