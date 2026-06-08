@@ -30,14 +30,14 @@ def is_enrolled(user, course):
     )
 
 
-def get_course_or_404(pk):
+def course_exists(pk):
     try:
         return Course.objects.get(pk=pk)
     except Course.DoesNotExist:
         return None
 
 
-def get_chapter_or_404(course_pk, chapter_pk):
+def chapter_exists(course_pk, chapter_pk):
     try:
         return Chapter.objects.get(pk=chapter_pk, course__pk=course_pk)
     except Chapter.DoesNotExist:
@@ -79,7 +79,7 @@ class CourseDetailView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request, pk):
-        course = get_course_or_404(pk)
+        course = course_exists(pk)
         if course is None:
             return Response(
                 {"detail": "Course not found."},
@@ -90,7 +90,7 @@ class CourseDetailView(APIView):
         return Response(serializer.data)
 
     def put(self, request, pk):
-        course = get_course_or_404(pk)
+        course = course_exists(pk)
         if course is None:
             return Response(
                 {"detail": "Course not found."},
@@ -110,7 +110,7 @@ class CourseDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        course = get_course_or_404(pk)
+        course = course_exists(pk)
         if course is None:
             return Response(
                 {"detail": "Course not found."},
@@ -131,7 +131,7 @@ class ChapterListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, course_pk):
-        course = get_course_or_404(course_pk)
+        course = course_exists(course_pk)
         if course is None:
             return Response(
                 {"detail": "Course not found."},
@@ -152,7 +152,7 @@ class ChapterListView(APIView):
         return Response(serializer.data)
 
     def post(self, request, course_pk):
-        course = get_course_or_404(course_pk)
+        course = course_exists(course_pk)
         if course is None:
             return Response(
                 {"detail": "Course not found."},
@@ -179,7 +179,7 @@ class ChapterDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, course_pk, chapter_pk):
-        chapter = get_chapter_or_404(course_pk, chapter_pk)
+        chapter = chapter_exists(course_pk, chapter_pk)
         if chapter is None:
             return Response(
                 {"detail": "Chapter not found."},
@@ -199,7 +199,7 @@ class ChapterDetailView(APIView):
         return Response(serializer.data)
 
     def put(self, request, course_pk, chapter_pk):
-        chapter = get_chapter_or_404(course_pk, chapter_pk)
+        chapter = chapter_exists(course_pk, chapter_pk)
         if chapter is None:
             return Response(
                 {"detail": "Chapter not found."},
@@ -219,7 +219,7 @@ class ChapterDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, course_pk, chapter_pk):
-        chapter = get_chapter_or_404(course_pk, chapter_pk)
+        chapter = chapter_exists(course_pk, chapter_pk)
         if chapter is None:
             return Response(
                 {"detail": "Chapter not found."},
@@ -240,7 +240,7 @@ class EnrollCourseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, course_pk):
-        course = get_course_or_404(course_pk)
+        course = course_exists(course_pk)
         if course is None:
             return Response(
                 {"detail": "Course not found."},
