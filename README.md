@@ -131,6 +131,8 @@ npm run dev
 
 ## Reference Links
 
+- [Official DRF Documentation](https://www.django-rest-framework.org/)
+- [Official Axios Repo](https://github.com/axios/axios)
 - [Django REST Framework Oversimplified](https://www.youtube.com/watch?v=cJveiktaOSQ)
 - [Python Django REST API In 30 Minutes - Django Tutorial](https://www.youtube.com/watch?v=NoLF7Dlu5mc)
 - [React Django Tutorial - Learn React Python Django In 1 Hour | For Beginners](https://www.youtube.com/watch?v=xldTxXtNiuk)
