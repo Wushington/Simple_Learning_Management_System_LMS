@@ -3,17 +3,21 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Login() {
-	const [email, setEmail] = useState("");
+	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
+	const [errorMessage, setErrorMessage] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setErrorMessage("");
+		setIsSubmitting(true);
 		try {
 			const response = await axios.post(
-				"http://localhost:8000/api/accounts/login/",
+				"http://localhost:8000/api/accounts/token/",
 				{
-					email,
+					username,
 					password,
 				},
 			);
@@ -22,7 +26,9 @@ function Login() {
 			navigate("/");
 		} catch (error) {
 			console.error("Login failed:", error);
-			alert("Login failed. Email or password is incorrect.");
+			setErrorMessage("Login failed. Username or password is incorrect.");
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -30,14 +36,19 @@ function Login() {
 		<main className="auth-page">
 			<div className="auth-container">
 				<h2>Login</h2>
+				{errorMessage && (
+					<p className="form-error" role="alert">
+						{errorMessage}
+					</p>
+				)}
 				<form onSubmit={handleSubmit}>
 					<div className="form-group">
-						<label htmlFor="email">Email:</label>
+						<label htmlFor="username">Username:</label>
 						<input
-							type="email"
-							id="email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
+							type="text"
+							id="username"
+							value={username}
+							onChange={(e) => setUsername(e.target.value)}
 							required
 						/>
 					</div>
@@ -51,7 +62,9 @@ function Login() {
 							required
 						/>
 					</div>
-					<button type="submit">Login</button>
+					<button type="submit" disabled={isSubmitting}>
+						{isSubmitting ? "Logging in..." : "Login"}
+					</button>
 				</form>
 				<Link className="form-link" to="/register">
 					Don't have an account? Register here.

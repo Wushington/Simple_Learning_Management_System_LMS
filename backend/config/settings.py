@@ -130,7 +130,9 @@ STATIC_URL = 'static/'
 # Allow CORS for local development
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Default Vite port
+    "http://127.0.0.1:5173",  # Vite when opened by IP loopback
     "http://localhost:3000",  # Default Create-React-App port
+    "http://127.0.0.1:3000",  # Create-React-App when opened by IP loopback
 ]
 
 REST_FRAMEWORK = {
