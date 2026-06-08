@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AiOutlineDown, AiOutlinePlus } from "react-icons/ai";
+import { AiOutlineLeft, AiOutlinePlus } from "react-icons/ai";
 import NavItem from "./NavItem.jsx";
 
 function Navbar({
@@ -7,10 +7,11 @@ function Navbar({
 	selectedChapterId,
 	onChapterSelect,
 	onAddCourse,
+	onAddChapter,
 	onEditCourse,
 	onEditChapter,
 	onCourseSelect,
-	courseActionLabel = "Add course",
+	newActionLabel = "New",
 	canEditCourses = false,
 	canEditChapters = false,
 	emptyCourseMessage = "No courses yet.",
@@ -22,10 +23,9 @@ function Navbar({
 
 	function handleItemClick(item) {
 		if (item.type === "course") {
-			const nextCourse = selectedCourseId === item.id ? null : item;
-
-			setSelectedCourseId(nextCourse?.id ?? null);
-			onCourseSelect?.(nextCourse);
+			setSelectedCourseId(item.id);
+			onCourseSelect?.(item);
+			onChapterSelect(null);
 			return;
 		}
 
@@ -34,109 +34,112 @@ function Navbar({
 		}
 	}
 
+	function handleBack() {
+		setSelectedCourseId(null);
+		onCourseSelect?.(null);
+		onChapterSelect(null);
+	}
+
+	function handleNewClick() {
+		if (selectedCourse && onAddChapter) {
+			onAddChapter(selectedCourse);
+			return;
+		}
+
+		onAddCourse?.();
+	}
+
 	const courseItems = courses.map((course) => ({
 		...course,
 		type: "course",
 	}));
 
+	const chapterItems =
+		selectedCourse?.chapters?.map((chapter) => ({
+			...chapter,
+			type: "chapter",
+			courseId: selectedCourse.id,
+		})) ?? [];
+
 	return (
 		<nav className="navbar" aria-label="Course chapters">
-			<section className="navbar-panel" aria-label="Courses">
-				<div className="navbar-header">
-					<div>
-						<p className="navbar-eyebrow">Courses</p>
-						<h2>Library</h2>
-					</div>
-					{onAddCourse && (
-						<button
-							aria-label={courseActionLabel}
-							className="navbar-action-button"
-							onClick={onAddCourse}
-							title={courseActionLabel}
-							type="button"
-						>
-							<AiOutlinePlus aria-hidden="true" />
-							<span>{courseActionLabel}</span>
-						</button>
-					)}
-				</div>
+			<section className="navbar-panel">
+				<button
+					aria-label={newActionLabel}
+					className="navbar-new-button"
+					disabled={!onAddCourse && !(selectedCourse && onAddChapter)}
+					onClick={handleNewClick}
+					title={newActionLabel}
+					type="button"
+				>
+					<AiOutlinePlus aria-hidden="true" />
+					<span>{newActionLabel}</span>
+				</button>
 
-				<div className="navbar-list">
-					{courseItems.length === 0 ?
-						<div className="navbar-empty-state">
-							<p className="navbar-empty">{emptyCourseMessage}</p>
-							{onAddCourse && (
-								<button
-									className="navbar-empty-action"
-									onClick={onAddCourse}
-									type="button"
-								>
-									<AiOutlinePlus aria-hidden="true" />
-									<span>{courseActionLabel}</span>
-								</button>
-							)}
+				{!selectedCourse ?
+					<div className="navbar-view" aria-label="Courses">
+						<div className="navbar-header">
+							<div>
+								<p className="navbar-eyebrow">Courses</p>
+								<h2>Library</h2>
+							</div>
 						</div>
-					:	courseItems.map((item) => {
-							const isExpanded = item.id === selectedCourse?.id;
-							const chapterItems =
-								item.chapters?.map((chapter) => ({
-									...chapter,
-									type: "chapter",
-									courseId: item.id,
-								})) ?? [];
 
-							return (
-								<div className="course-group" key={`${item.type}-${item.id}`}>
+						<div className="navbar-list">
+							{courseItems.length === 0 ?
+								<p className="navbar-empty">{emptyCourseMessage}</p>
+							:	courseItems.map((item) => (
 									<NavItem
+										key={`${item.type}-${item.id}`}
 										item={item}
-										isActive={isExpanded}
-										isExpanded={isExpanded}
 										onEdit={
 											canEditCourses && onEditCourse ?
 												() => onEditCourse(item)
 											:	undefined
 										}
 										onClick={handleItemClick}
-										trailingIcon={
-											<AiOutlineDown
-												aria-hidden="true"
-												className={
-													isExpanded ?
-														"course-toggle-icon expanded"
-													:	"course-toggle-icon"
-												}
-											/>
-										}
 									/>
+								))
+							}
+						</div>
+					</div>
+				:	<div className="navbar-view" aria-label="Chapters">
+						<button
+							className="navbar-back-button"
+							onClick={handleBack}
+							type="button"
+						>
+							<AiOutlineLeft aria-hidden="true" />
+							<span>Back</span>
+						</button>
 
-									{isExpanded && (
-										<div className="chapter-list">
-											{chapterItems.length === 0 ?
-												<p className="navbar-empty chapter-empty">
-													{emptyChapterMessage}
-												</p>
-											:	chapterItems.map((chapter) => (
-													<NavItem
-														key={`${chapter.type}-${chapter.id}`}
-														item={chapter}
-														isActive={chapter.id === selectedChapterId}
-														isNested
-														onEdit={
-															canEditChapters && onEditChapter ?
-																() => onEditChapter(chapter)
-															:	undefined
-														}
-														onClick={handleItemClick}
-													/>
-												))
-											}
-										</div>
-									)}
-								</div>
-							);
-						})
-					}
-				</div>
+						<div className="navbar-header compact">
+							<div>
+								<p className="navbar-eyebrow">Course</p>
+								<h2>{selectedCourse.title}</h2>
+							</div>
+						</div>
+
+						<div className="navbar-list">
+							{chapterItems.length === 0 ?
+								<p className="navbar-empty">{emptyChapterMessage}</p>
+							:	chapterItems.map((chapter) => (
+									<NavItem
+										key={`${chapter.type}-${chapter.id}`}
+										item={chapter}
+										isActive={chapter.id === selectedChapterId}
+										onEdit={
+											canEditChapters && onEditChapter ?
+												() => onEditChapter(chapter)
+											:	undefined
+										}
+										onClick={handleItemClick}
+									/>
+								))
+							}
+						</div>
+					</div>
+				}
 			</section>
 		</nav>
 	);

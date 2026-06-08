@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import ChapterContentPanel from "./ChapterContentPanel.jsx";
+import ChapterContentForm from "./ChapterContentForm.jsx";
 import ChapterForm from "./ChapterForm.jsx";
 import CourseForm from "./CourseForm.jsx";
 import Navbar from "./Navbar.jsx";
@@ -18,11 +19,11 @@ import {
 	EMPTY_CHAPTER_CONTENT,
 	getNextChapterNumber,
 	isCourseOwnedByUser,
+	textToChapterContent,
 } from "../lib/chapterUtils.js";
 
 function InstructorView() {
 	const [courses, setCourses] = useState([]);
-	const [selectedCourse, setSelectedCourse] = useState(null);
 	const [selectedChapter, setSelectedChapter] = useState(null);
 	const [formMode, setFormMode] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
@@ -52,12 +53,6 @@ function InstructorView() {
 			);
 
 			setCourses(coursesWithChapters);
-			setSelectedCourse((currentCourse) =>
-				currentCourse ?
-					coursesWithChapters.find((course) => course.id === currentCourse.id) ??
-						null
-				:	null,
-			);
 		} catch (requestError) {
 			setError(
 				requestError.response?.data?.detail ??
@@ -85,6 +80,11 @@ function InstructorView() {
 
 	function openChapterEditForm(chapter) {
 		setFormMode({ type: "edit-chapter", chapter });
+		setError("");
+	}
+
+	function openContentForm(chapter) {
+		setFormMode({ type: "edit-content", chapter });
 		setError("");
 	}
 
@@ -172,19 +172,44 @@ function InstructorView() {
 		}
 	}
 
+	async function handleUpdateContent(contentText) {
+		setError("");
+
+		const chapter = formMode.chapter;
+		const content = textToChapterContent(contentText);
+
+		try {
+			const updatedChapter = await updateChapter(
+				chapter.courseId,
+				chapter.id,
+				chapter.title,
+				content.length > 0 ? content : EMPTY_CHAPTER_CONTENT,
+				chapter.number,
+				chapter.is_public,
+			);
+			setSelectedChapter({ ...updatedChapter, courseId: chapter.courseId });
+			closePopout();
+			await loadCourses();
+		} catch (requestError) {
+			setError(
+				requestError.response?.data?.detail ?? "Could not update the content.",
+			);
+		}
+	}
+
 	return (
 		<section className="learning-shell">
 			<Navbar
 				canEditChapters
 				canEditCourses
-				courseActionLabel="Create course"
 				courses={courses}
 				emptyCourseMessage="Create a course to get started."
 				emptyChapterMessage="Add a chapter for this course."
 				onAddCourse={openCourseForm}
-				onCourseSelect={setSelectedCourse}
+				onAddChapter={openChapterForm}
 				onEditChapter={openChapterEditForm}
 				onEditCourse={openCourseEditForm}
+				newActionLabel="New"
 				onChapterSelect={setSelectedChapter}
 				selectedChapterId={selectedChapter?.id}
 			/>
@@ -197,17 +222,17 @@ function InstructorView() {
 					</div>
 					<button
 						className="instructor-header-action"
-						disabled={!selectedCourse}
-						onClick={() => openChapterForm(selectedCourse)}
+						disabled={!selectedChapter}
+						onClick={() => openContentForm(selectedChapter)}
 						title={
-							selectedCourse ?
-								`Add chapter to ${selectedCourse.title}`
-							:	"Select a course before adding a chapter"
+							selectedChapter ?
+								`Add content to ${selectedChapter.title}`
+							:	"Select a chapter before adding content"
 						}
 						type="button"
 					>
 						<AiOutlinePlus aria-hidden="true" />
-						<span>Add chapter</span>
+						<span>Add content</span>
 					</button>
 				</header>
 
@@ -264,6 +289,16 @@ function InstructorView() {
 						onCancel={closePopout}
 						onSubmit={handleUpdateChapter}
 						submitLabel="Save changes"
+					/>
+				</PopoutContainer>
+			)}
+
+			{formMode?.type === "edit-content" && (
+				<PopoutContainer onClose={closePopout} title="Add content">
+					<ChapterContentForm
+						initialChapter={formMode.chapter}
+						onCancel={closePopout}
+						onSubmit={handleUpdateContent}
 					/>
 				</PopoutContainer>
 			)}

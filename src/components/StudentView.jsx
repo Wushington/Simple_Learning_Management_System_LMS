@@ -89,10 +89,10 @@ function StudentView() {
 	return (
 		<section className="learning-shell">
 			<Navbar
-				courseActionLabel="Enroll in course"
 				courses={courses}
 				emptyCourseMessage="Enroll in a course to see chapters."
 				emptyChapterMessage="No published chapters yet."
+				newActionLabel="Enroll"
 				onAddCourse={openEnrollForm}
 				onChapterSelect={setSelectedChapter}
 				selectedChapterId={selectedChapter?.id}
